@@ -1,18 +1,12 @@
 
-first_last_occurrence.cpp
-Page
-1
-/
-1
-100%
 #include <bits/stdc++.h>
 using namespace std;
 
 class Solution {
 public:
     vector<int> searchRange(vector<int>& nums, int target) {
-        int first = findLast(nums, target); 
-        int last = findFirst(nums, target); 
+        int first = findFirst(nums, target); // function call changed to first occurance
+        int last = findLast(nums, target);  // function call changed to last occurance
 
         return {first, last};
     }
@@ -22,7 +16,7 @@ private:
         int low = 0, high = nums.size() - 1;
         int ans = -1;
 
-        while (low < high) { 
+        while (low <= high) { 
             int mid = low + (high - low) / 2;
 
             if (nums[mid] == target) {
@@ -49,7 +43,7 @@ private:
 
             if (nums[mid] == target) {
                 ans = mid;
-                high = mid - 1; 
+                low = mid+1; // when we want to find last occurance , we need to go on right side of nums
             }
             else if (nums[mid] < target) {
                 low = mid + 1;
