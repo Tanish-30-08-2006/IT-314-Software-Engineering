@@ -180,26 +180,158 @@ def main():
 
 
     # ---------------------------------------------------------
-    # Final Step: Exporting the Document
+    # Step 6: User Story Generation
+    # ---------------------------------------------------------
+    prompt_stage_6 = PromptTemplate(
+        input_variables=["requirements"],
+        template="""
+        Based on the generated Functional Requirements (FRs), create Agile User Stories.
+        Format: 'As a <stakeholder>, I want <goal>, so that <benefit>.'
+        Include the Front of the card and the Back of the card (Acceptance Criteria) for each story.
+        
+        Requirements: {requirements}
+        """
+    )
+    user_stories = run_stage_with_feedback(prompt_stage_6, {"requirements": requirements}, "Step 6: User Story Generation")
+
+
+    # ---------------------------------------------------------
+    # Step 7: INVEST Criteria Check (LLM-as-a-Judge)
+    # ---------------------------------------------------------
+    prompt_stage_7 = PromptTemplate(
+        input_variables=["user_stories"],
+        template="""
+        You are an Agile Coach. Evaluate the following User Stories against the INVEST criteria:
+        (Independent, Negotiable, Valuable, Estimable, Small, Testable).
+        
+        Flag any stories that fail and briefly explain why. If they pass, state that they meet the INVEST criteria.
+        
+        User Stories:
+        {user_stories}
+        """
+    )
+    invest_evaluation = run_stage_with_feedback(prompt_stage_7, {"user_stories": user_stories}, "Step 7: INVEST Criteria Check")
+
+
+    # ---------------------------------------------------------
+    # Step 8: Sprint Grouping & Selection
+    # ---------------------------------------------------------
+    prompt_stage_8 = PromptTemplate(
+        input_variables=["user_stories", "invest_evaluation"],
+        template="""
+        Based on the approved User Stories and their INVEST evaluation, organize the stories into 2-3 logical Sprints based on priority.
+        Present the Sprints clearly. Then, ask the user which Sprint they would like to proceed with (the user will reply in the feedback prompt).
+        
+        User Stories & Evaluation:
+        {user_stories}
+        {invest_evaluation}
+        """
+    )
+    sprints = run_stage_with_feedback(prompt_stage_8, {"user_stories": user_stories, "invest_evaluation": invest_evaluation}, "Step 8: Sprint Grouping & Selection")
+
+
+    # ---------------------------------------------------------
+    # Step 9: Prototype Generation
+    # ---------------------------------------------------------
+    prompt_stage_9 = PromptTemplate(
+        input_variables=["sprints"],
+        template="""
+        Based on the Sprints identified above, and considering the user's feedback selection (if any), 
+        generate a working Python CLI prototype that implements the core functionality of the selected sprint's user stories.
+        Output ONLY valid, raw Python code. Do not include markdown formatting or explanations.
+        
+        Sprints & Selection Context:
+        {sprints}
+        """
+    )
+    prototype_code_raw = run_stage_with_feedback(prompt_stage_9, {"sprints": sprints}, "Step 9: Prototype Generation")
+    
+    # Clean the code if LLM included markdown
+    prototype_code = prototype_code_raw.replace("```python", "").replace("```", "").strip()
+    
+    with open("prototype.py", "w", encoding="utf-8") as f:
+        f.write(prototype_code)
+    print(" Saved prototype code to 'prototype.py'")
+
+
+    # ---------------------------------------------------------
+    # Step 10: Test Case Generation
+    # ---------------------------------------------------------
+    prompt_stage_10 = PromptTemplate(
+        input_variables=["sprints", "prototype_code"],
+        template="""
+        Based on the selected sprint's Acceptance Criteria and the generated Python prototype, write a valid Python `unittest` script to test the prototype.
+        The prototype is saved as a module named `prototype` (so you can `import prototype`).
+        Output ONLY valid, raw Python code containing the unittests. Do not include markdown formatting.
+        
+        Sprint Context: {sprints}
+        Prototype Code: {prototype_code}
+        """
+    )
+    test_code_raw = run_stage_with_feedback(prompt_stage_10, {"sprints": sprints, "prototype_code": prototype_code}, "Step 10: Test Case Generation")
+    
+    test_code = test_code_raw.replace("```python", "").replace("```", "").strip()
+    with open("test_prototype.py", "w", encoding="utf-8") as f:
+        f.write(test_code)
+    print(" Saved test cases to 'test_prototype.py'")
+
+
+    # ---------------------------------------------------------
+    # Step 11: Automated Testing Execution
+    # ---------------------------------------------------------
+    print("\n🚀 Running Step 11: Automated Testing Execution...")
+    import subprocess
+    try:
+        # Run the generated tests natively
+        test_result = subprocess.run(
+            ["python", "-m", "unittest", "test_prototype.py"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        test_output = test_result.stdout + "\n" + test_result.stderr
+    except Exception as e:
+        test_output = f"Error executing tests: {e}"
+
+    print("\n--- Raw Test Output ---")
+    print(test_output)
+    print("-----------------------\n")
+
+    prompt_stage_11 = PromptTemplate(
+        input_variables=["test_output"],
+        template="""
+        The automated test suite has been executed against the prototype. Analyze the test execution output below.
+        Report the final pass/fail results, and if any tests failed, briefly explain why.
+        
+        Test Execution Output:
+        {test_output}
+        """
+    )
+    test_report = run_stage_with_feedback(prompt_stage_11, {"test_output": test_output}, "Step 11: Automated Test Report")
+
+
+    # ---------------------------------------------------------
+    # Final Step: Exporting the Document (Lab 4)
     # ---------------------------------------------------------
     print("\n Pipeline Completed Successfully!")
-    output_filename = "final_requirements.txt"
+    output_filename = "final_agile_lifecycle_lab4.txt"
     print(f" Saving final structured document to '{output_filename}'...")
     
     with open(output_filename, "w", encoding="utf-8") as f:
-        f.write("=== Smart Campus Cafeteria Requirements ===\n\n")
-        f.write("--- STAKEHOLDERS ---\n")
-        f.write(stakeholders + "\n\n")
-        f.write("--- GOALS & PAIN POINTS ---\n")
-        f.write(goals + "\n\n")
-        f.write("--- ELICITATION TECHNIQUES ---\n")
-        f.write(techniques + "\n\n")
-        f.write("--- ELICITATION INSTRUMENTS ---\n")
-        f.write(instruments + "\n\n")
-        f.write("--- FINAL FRs AND NFRs ---\n")
-        f.write(requirements + "\n")
+        f.write("=== Smart Campus Cafeteria Agile Pipeline (Lab 4) ===\n\n")
+        f.write("--- STAKEHOLDERS ---\n" + stakeholders + "\n\n")
+        f.write("--- GOALS & PAIN POINTS ---\n" + goals + "\n\n")
+        f.write("--- ELICITATION TECHNIQUES ---\n" + techniques + "\n\n")
+        f.write("--- ELICITATION INSTRUMENTS ---\n" + instruments + "\n\n")
+        f.write("--- FINAL FRs AND NFRs ---\n" + requirements + "\n\n")
+        f.write("--- USER STORIES ---\n" + user_stories + "\n\n")
+        f.write("--- INVEST EVALUATION ---\n" + invest_evaluation + "\n\n")
+        f.write("--- SPRINT SELECTION ---\n" + sprints + "\n\n")
+        f.write("--- PROTOTYPE CODE ---\n" + prototype_code + "\n\n")
+        f.write("--- TEST CASES ---\n" + test_code + "\n\n")
+        f.write("--- AUTOMATED TEST REPORT ---\n" + test_report + "\n")
         
-    print(" Done! You can check 'final_requirements.txt' for the complete generated report.")
+    print(f" Done! You can check '{output_filename}' for the complete generated report.")
 
 if __name__ == "__main__":
     main()
