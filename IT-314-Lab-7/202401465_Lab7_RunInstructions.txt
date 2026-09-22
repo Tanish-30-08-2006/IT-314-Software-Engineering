@@ -1,0 +1,6 @@
+1. Open your terminal or command prompt.
+2. Navigate to the `IT-314-Lab-7` directory.
+3. Run the following command:
+   python src/main.py
+
+The script will automatically execute all 7 required test cases and print clearly labeled [PASS] or [FAIL] results.
