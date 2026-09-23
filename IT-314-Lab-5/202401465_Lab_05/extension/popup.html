@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LiveReq Analyst</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="header">
+        <h2>LiveReq Analyst</h2>
+        <span class="badge">LangChain</span>
+    </div>
+
+    <div id="statusBar" class="status-bar status-checking">Checking backend connection...</div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="live-tab">Live Q&A</button>
+        <button class="tab-btn" data-tab="dashboard-tab">Requirements</button>
+        <button class="tab-btn" data-tab="simulate-tab">Test</button>
+    </div>
+
+    <!-- Live Q&A Tab -->
+    <div id="live-tab" class="tab-content active">
+        <h3>Pending Clarifications</h3>
+        <div id="questionsContainer">
+            <p class="empty-state">No ambiguous requirements detected yet. Use the Test tab or join a Google Meet.</p>
+        </div>
+        <button id="generateBtn" class="primary-btn full-width">Generate Requirements</button>
+        <button id="clearBtn" class="secondary-btn full-width" style="margin-top:8px;">Clear All Data</button>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div id="dashboard-tab" class="tab-content">
+        <div id="dashboardContent">
+            <p class="empty-state">Click "Generate Requirements" in the Live tab first.</p>
+        </div>
+        <div class="actions" style="display:none;" id="exportActions">
+            <button id="exportTxtBtn" class="secondary-btn">Export TXT</button>
+        </div>
+    </div>
+
+    <!-- Simulate Tab -->
+    <div id="simulate-tab" class="tab-content">
+        <p style="font-size:13px;color:#666;">Type or paste a transcript snippet below and click Simulate. The LangChain backend will analyze it and generate a clarification question if the statement is vague.</p>
+        <textarea id="simulateText" rows="4" placeholder="e.g. We need an AI based resume analyzer."></textarea>
+        <button id="simulateBtn" class="primary-btn full-width">Simulate Transcript Segment</button>
+        <div id="simulateResult" style="margin-top:10px;"></div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
